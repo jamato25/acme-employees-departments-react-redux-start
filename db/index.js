@@ -1,14 +1,14 @@
 const Sequelize = require('sequelize');
 const { STRING } = Sequelize;
-const conn = new Sequelize(process.env.DATABASE_URL || 'postgres://localhost/acme_db');
+const conn = new Sequelize(process.env.DATABASE_URL || 'postgres://localhost/acme_db',{logging:false});
 const faker = require('faker');
 
 const Employee = conn.define('employee', {
-  name: STRING 
+  name: STRING
 });
 
 const Department = conn.define('department', {
-  name: STRING 
+  name: STRING
 });
 
 Employee.belongsTo(Department);

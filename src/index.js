@@ -1,7 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import axios from 'axios';
-
+import {Provider, connect} from 'react-redux';
+import store from './store'
+import {getEmployees} from './store'
 import Departments from './Departments';
 import Stats from './Stats';
 
@@ -26,14 +28,15 @@ class App extends React.Component{
     this.setState({ employees });
   }
   async componentDidMount(){
-    const responses = await Promise.all([
-      axios.get('/api/employees'),
-      axios.get('/api/departments'),
-    ]);
-    this.setState({
-      employees: responses[0].data,
-      departments: responses[1].data
-    });
+    this.props.loadEmployees();
+    // const responses = await Promise.all([
+    //   axios.get('/api/employees'),
+    //   axios.get('/api/departments'),
+    // ]);
+    // this.setState({
+    //   employees: responses[0].data,
+    //   departments: responses[1].data
+    // });
   }
   render(){
     const { departments, employees } = this.state;
@@ -53,4 +56,12 @@ class App extends React.Component{
   }
 }
 
-ReactDOM.render(<App />, document.querySelector('#root'));
+const mapDispatchToProps = (dispatch) =>{
+  return {
+    loadEmployees: () => dispatch(getEmployees())
+  }
+}
+
+export default connect(null, mapDispatchToProps)(App)
+
+ReactDOM.render(<Provider store = {store}> <App /></Provider>, document.querySelector('#root'));
