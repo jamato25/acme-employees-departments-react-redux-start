@@ -1,13 +1,18 @@
-import {createStore} from 'redux';
-import logger from 'redux-logger'
-import{applyMiddleware} from 'redux'
+import {createStore, applyMiddleware} from 'redux';
+import {createLogger} from 'redux-logger'
 import axios from 'axios'
+import thunkMiddleware from 'redux-thunk'
+import {composeWithDevTools} from 'redux-devTools-extension'
 
-const middleware = applyMiddleware(logger);
+
+const middleware = composeWithDevTools(
+  applyMiddleware(thunkMiddleware,createLogger({collapse:true}))
+);
 
 const REMOVE_FROM_DEPARTMENT = "REMOVE_FROM_DEPARTMENT"
 const DESTROY_EMPLOYEE = "DESTROY_EMPLOYEE"
 const SET_EMPLOYEES = "SET_EMPLOYEES"
+const SET_DEPARTMENTS = "SET_DEPARTMENTS"
 
 const initialState ={
   departments: [],
@@ -15,27 +20,42 @@ const initialState ={
 };
 
 //action creators
-const removeFromDepartment = (employee) =>{
-  return {
-    type: REMOVE_FROM_DEPARTMENT,
-    employee
+export const removeFromDepartment = (employee) =>{
+  return async (dispatch)=>{
+    try{
+      await axios.put(`/api/employees/${employee.id}`, { departmentId: null});
+      const {data} = await axios.get('/api/employees')
+      dispatch(setEmployees(data))
+    }
+    catch(err){
+      console.log(err)
+    }
   }
 }
 
-const destroyEmployee = (employee) =>{
-  return {
-    type: DESTROY_EMPLOYEE,
-    employee
+export const destroyEmployee = (employee) =>{
+  return async (dispatch)=>{
+    try{
+      await axios.delete(`/api/employees/${employee.id}`);
+      const {data} = await axios.get('/api/employees')
+      dispatch(setEmployees(data))
+    }
+    catch(err){
+      console.log(err)
+    }
   }
 }
 
-const setEmployees = (employees)=>{
+
+export const setEmployees = (employees)=>{
   return {
     type: SET_EMPLOYEES,
     employees
+
   }
 }
-const getEmployees = ()=>{
+
+export const fetchEmployees = () => {
   return async (dispatch)=>{
     try{
       const {data} = await axios.get('/api/employees')
@@ -47,11 +67,31 @@ const getEmployees = ()=>{
   }
 }
 
+export const setDepartments = (departments)=>{
+  return {
+    type: SET_DEPARTMENTS,
+    departments
+  }
+}
+export const fetchDepartments = () => {
+  return async (dispatch)=>{
+    try{
+      const {data} = await axios.get('/api/departments')
+      dispatch(setDepartments(data))
+    }
+    catch(err){
+      console.log(err)
+    }
+  }
+}
+
 //reducer
 const reducer = (state = initialState, action) =>{
   switch(action.type){
     case SET_EMPLOYEES:
-      return action.employees;
+      return {...state, employees: action.employees};
+    case SET_DEPARTMENTS:
+      return {...state, departments: action.departments};
     case REMOVE_FROM_DEPARTMENT:
       console.log("remove")
       return state;
@@ -63,7 +103,6 @@ const reducer = (state = initialState, action) =>{
   }
 }
 
-const store= createStore(reducer, middleware);
+const store = createStore(reducer, middleware);
 
 export default store;
-export {destroyEmployee, removeFromDepartment, getEmployees}
